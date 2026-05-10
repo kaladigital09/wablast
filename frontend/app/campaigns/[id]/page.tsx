@@ -38,12 +38,15 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const [actionLoading, setActionLoading] = useState(false);
 
   const { data: campaign, mutate: mutateCampaign } = useSWR(`/api/campaigns/${id}`, fetcher, {
-    refreshInterval: 3000,
+    // Polling cuma saat campaign sedang berjalan (running/queued).
+    refreshInterval: (latest) =>
+      latest && ['running', 'queued'].includes(latest.status) ? 3000 : 0,
   });
+  const isLive = campaign && ['running', 'queued'].includes(campaign.status);
   const { data: messagesData, mutate: mutateMessages } = useSWR(
     `/api/campaigns/${id}/messages`,
     fetcher,
-    { refreshInterval: 3000 }
+    { refreshInterval: isLive ? 3000 : 0 }
   );
 
   async function sendOne(messageId: number) {
