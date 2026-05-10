@@ -35,25 +35,19 @@ from clients c
 left join user_profiles up on up.client_id = c.id
 left join auth.users au on au.id = up.id;
 
--- 4. RLS policies (defense-in-depth, walaupun backend sudah scope manual)
-alter table user_profiles enable row level security;
-
-drop policy if exists "Users can read own profile" on user_profiles;
-create policy "Users can read own profile"
-  on user_profiles for select
-  using (auth.uid() = id);
-
-drop policy if exists "Service role full access user_profiles" on user_profiles;
-create policy "Service role full access user_profiles"
-  on user_profiles for all
-  using (auth.role() = 'service_role');
-
--- Disable RLS untuk semua tabel app.
+-- 4. Disable RLS untuk SEMUA tabel app.
 -- Backend pakai service_role key & sudah handle authorization via middleware
--- (requireSuperAdmin, scopeByClient, assertClientAccess). RLS default-deny
--- malah block backend walau service_role JWT seharusnya bypass — pengalaman
--- production: PostgREST nested select silent-fail return [].
--- user_profiles tetap RLS-enabled karena dipakai langsung oleh Supabase Auth.
+-- (requireSuperAdmin, scopeByClient, assertClientAccess di backend/src/middleware/auth.js).
+--
+-- Pengalaman: RLS aktif tanpa policy match bikin backend di-block walau pakai
+-- service_role JWT (PostgREST nested select silent-fail return []). User_profiles
+-- juga termasuk — saat super_admin mau baca profile client lain, RLS block
+-- karena policy `auth.uid() = id` cuma allow read profile sendiri.
+--
+-- Frontend Kala Blast TIDAK pernah query Supabase langsung (semua via backend),
+-- jadi disable RLS aman. Kalau di masa depan tambah Supabase JS di frontend,
+-- WAJIB re-enable RLS dengan policy proper dulu.
+alter table user_profiles disable row level security;
 alter table clients disable row level security;
 alter table wa_sessions disable row level security;
 alter table wa_auth_state disable row level security;
