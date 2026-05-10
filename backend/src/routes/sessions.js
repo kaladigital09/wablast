@@ -15,12 +15,10 @@ async function fetchSession(id) {
 }
 
 // List sessions — scoped per role
-// Tidak JOIN clients (frontend sudah punya list clients dari /api/clients).
-// JOIN bikin query lambat untuk super_admin (semua row).
 router.get('/', async (req, res) => {
   let query = supabase
     .from('wa_sessions')
-    .select('*')
+    .select('*, clients(id, name, event_type, event_date)')
     .order('created_at', { ascending: false });
 
   // Client user → force filter ke client mereka (override query param)

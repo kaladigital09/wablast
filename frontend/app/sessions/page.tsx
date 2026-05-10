@@ -103,19 +103,12 @@ function SessionsContent() {
 
   const activeClient = clients?.find((c: any) => c.id === clientId);
 
-  // Lookup map client by id (cegah JOIN di backend; frontend resolve sendiri)
-  const clientById = (clients || []).reduce((acc: any, c: any) => {
-    acc[c.id] = c;
-    return acc;
-  }, {});
-
   // Group sessions berdasarkan client (untuk view "Semua")
   const groupedByClient = !clientId
     ? (sessions || []).reduce((acc: any, s: any) => {
         const cid = s.client_id || '_orphan';
-        const c = clientById[s.client_id];
-        const cname = c?.name || 'Tanpa Client';
-        if (!acc[cid]) acc[cid] = { name: cname, items: [], event_type: c?.event_type };
+        const cname = s.clients?.name || 'Tanpa Client';
+        if (!acc[cid]) acc[cid] = { name: cname, items: [], event_type: s.clients?.event_type };
         acc[cid].items.push(s);
         return acc;
       }, {})
@@ -261,7 +254,6 @@ function SessionsContent() {
                 <SessionCard
                   key={s.id}
                   session={s}
-                  client={clientById[s.client_id]}
                   onStart={startSession}
                   onStop={stopSession}
                   onDelete={isAdmin ? (s: any) => setDeleteTarget({ id: s.id, label: s.label, status: s.status }) : undefined}
@@ -297,7 +289,6 @@ function SessionsContent() {
                       <SessionCard
                         key={s.id}
                         session={s}
-                        client={clientById[s.client_id]}
                         onStart={startSession}
                         onStop={stopSession}
                         onDelete={
@@ -351,7 +342,7 @@ export default function SessionsPage() {
   );
 }
 
-function SessionCard({ session, client, onStart, onStop, onDelete }: any) {
+function SessionCard({ session, onStart, onStop, onDelete }: any) {
   const { data } = useSWR(`/api/sessions/${session.id}/qr`, fetcher, { refreshInterval: 2000 });
 
   const status = data?.status || session.status;
@@ -385,18 +376,18 @@ function SessionCard({ session, client, onStart, onStop, onDelete }: any) {
       </div>
 
       {/* Client info — bukti session terhubung ke client */}
-      {client && (
+      {session.clients && (
         <Link
           href={`/sessions?client_id=${session.client_id}`}
           className="flex items-center gap-2 text-xs bg-stone-50 hover:bg-violet-50 px-3 py-2 rounded-lg transition-colors group"
         >
           <span className="text-stone-400">Client:</span>
           <span className="font-medium text-stone-700 group-hover:text-violet-700 truncate">
-            {client.name}
+            {session.clients.name}
           </span>
-          {client.event_type && (
+          {session.clients.event_type && (
             <span className="ml-auto text-stone-400 capitalize">
-              {client.event_type.replace('_', ' ')}
+              {session.clients.event_type.replace('_', ' ')}
             </span>
           )}
         </Link>
