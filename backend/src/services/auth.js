@@ -89,41 +89,15 @@ export async function createSuperAdmin({ email, password, fullName = 'Super Admi
   return userData.user;
 }
 
-// In-memory cache untuk verified tokens.
-// Hindari hit Supabase 3x setiap request (auth.getUser + user_profiles + clients).
-// TTL 60 detik — cukup untuk burst request normal, tapi pendek supaya logout/role-change cepat ter-reflect.
-const tokenCache = new Map(); // token → { user, expiresAt }
-const TOKEN_CACHE_TTL_MS = 60 * 1000;
-const TOKEN_CACHE_MAX = 500;
-
-function pruneTokenCache() {
-  if (tokenCache.size < TOKEN_CACHE_MAX) return;
-  const now = Date.now();
-  for (const [k, v] of tokenCache) {
-    if (v.expiresAt < now) tokenCache.delete(k);
-  }
-  // Kalau masih over-limit, hapus paling lama (insertion order)
-  while (tokenCache.size >= TOKEN_CACHE_MAX) {
-    const firstKey = tokenCache.keys().next().value;
-    tokenCache.delete(firstKey);
-  }
-}
-
-export function invalidateTokenCache(token) {
-  if (token) tokenCache.delete(token);
+export function invalidateTokenCache(_token) {
+  // No-op — cache sudah di-revert. Disimpan supaya import dari routes/auth.js tidak error.
 }
 
 /**
  * Verify access token dari client → return user + profile.
- * Hasil di-cache 60 detik untuk hindari Supabase round-trip per request.
  */
 export async function verifyToken(accessToken) {
   if (!accessToken) return null;
-
-  const cached = tokenCache.get(accessToken);
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.user;
-  }
 
   const { data: userData, error } = await supabase.auth.getUser(accessToken);
   if (error || !userData?.user) return null;
@@ -147,7 +121,7 @@ export async function verifyToken(accessToken) {
     client = clientData || null;
   }
 
-  const user = {
+  return {
     id: userData.user.id,
     email: userData.user.email,
     role: profile.role,
@@ -155,10 +129,6 @@ export async function verifyToken(accessToken) {
     full_name: profile.full_name,
     client,
   };
-
-  pruneTokenCache();
-  tokenCache.set(accessToken, { user, expiresAt: Date.now() + TOKEN_CACHE_TTL_MS });
-  return user;
 }
 
 /**
