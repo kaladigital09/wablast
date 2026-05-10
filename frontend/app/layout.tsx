@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import { AuthProvider } from '@/lib/auth';
 import AppShell from './components/AppShell';
 import TopProgressBar from './components/TopProgressBar';
+import SwrProvider from './components/SwrProvider';
 
 export const metadata: Metadata = {
   title: 'Kala Blast — Undangan Digital',
@@ -17,9 +18,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Suspense fallback={null}>
           <TopProgressBar />
         </Suspense>
-        <AuthProvider>
-          <AppShell>{children}</AppShell>
-        </AuthProvider>
+        <SwrProvider>
+          <AuthProvider>
+            <AppShell>{children}</AppShell>
+          </AuthProvider>
+        </SwrProvider>
       </body>
     </html>
   );
