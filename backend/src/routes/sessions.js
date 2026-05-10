@@ -29,6 +29,14 @@ router.get('/', async (req, res) => {
   }
 
   const { data, error } = await query;
+  console.log('[sessions GET]', {
+    role: req.user?.role,
+    user_client_id: req.user?.client_id,
+    query_client_id: req.query.client_id,
+    error: error?.message,
+    rowCount: data?.length,
+    sample: data?.[0]?.label,
+  });
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
