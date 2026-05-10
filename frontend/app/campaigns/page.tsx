@@ -24,7 +24,16 @@ function CampaignsContent() {
   const isAdmin = user?.role === 'super_admin';
   const clientId = params.get('client_id');
   const url = clientId ? `/api/campaigns?client_id=${clientId}` : '/api/campaigns';
-  const { data, isLoading, mutate } = useSWR(url, fetcher, { refreshInterval: 5000 });
+  const { data, isLoading, mutate } = useSWR(url, fetcher, {
+    // Polling cuma saat ada campaign yang aktif (running/scheduled/queued).
+    // Status final (draft/completed/cancelled/paused_limit) tidak perlu polling.
+    refreshInterval: (latest) =>
+      latest?.some((c: any) =>
+        ['running', 'scheduled', 'queued'].includes(c.status)
+      )
+        ? 5000
+        : 0,
+  });
 
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);

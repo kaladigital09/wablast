@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { supabase } from '../db/supabase.js';
-import { verifyToken, createSuperAdmin } from '../services/auth.js';
+import { verifyToken, createSuperAdmin, invalidateTokenCache } from '../services/auth.js';
 
 const router = Router();
 
@@ -47,6 +47,7 @@ router.post('/logout', async (req, res) => {
   const authHeader = req.header('authorization') || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
   if (token) {
+    invalidateTokenCache(token);
     await supabase.auth.admin.signOut(token).catch(() => {});
   }
   res.json({ ok: true });
