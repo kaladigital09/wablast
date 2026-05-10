@@ -16,16 +16,7 @@ function SessionsContent() {
   const { user } = useAuth();
   const clientId = params.get('client_id');
 
-  // Super admin butuh list semua client untuk lookup nama di card session.
-  // Client user cuma punya 1 client (dirinya sendiri), data sudah ada di user.client → skip fetch.
-  const isAdmin = user?.role === 'super_admin';
-  const { data: clientsData } = useSWR(isAdmin ? '/api/clients' : null, fetcher);
-  const clients = isAdmin
-    ? clientsData
-    : user?.client
-    ? [user.client]
-    : [];
-
+  const { data: clients } = useSWR('/api/clients', fetcher);
   const { data: sessions, mutate, isLoading } = useSWR(
     clientId ? `/api/sessions?client_id=${clientId}` : '/api/sessions',
     fetcher,
@@ -37,6 +28,8 @@ function SessionsContent() {
   const [label, setLabel] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string; status: string } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+
+  const isAdmin = user?.role === 'super_admin';
 
   async function performDeleteSession() {
     if (!deleteTarget) return;
