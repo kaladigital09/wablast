@@ -29,15 +29,6 @@ router.get('/', async (req, res) => {
   }
 
   const { data, error } = await query;
-  console.log('[sessions GET]', JSON.stringify({
-    role: req.user?.role,
-    user_id: req.user?.id,
-    user_client_id: req.user?.client_id,
-    query_client_id: req.query.client_id,
-    error: error?.message,
-    rowCount: data?.length,
-    firstRow: data?.[0] ? { id: data[0].id, label: data[0].label, status: data[0].status, client_id: data[0].client_id } : null,
-  }));
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });

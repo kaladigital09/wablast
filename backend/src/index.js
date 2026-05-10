@@ -33,19 +33,12 @@ app.use('/api/sessions', sessionsRouter);
 app.use('/api/campaigns', campaignsRouter);
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, async () => {
+app.listen(PORT, () => {
   console.log(`[Backend] listening on :${PORT}`);
   startScheduler();
 
-  try {
-    const { data } = await supabase
-      .from('wa_sessions')
-      .select('id')
-      .in('status', ['connected', 'connecting']);
-    for (const s of data || []) {
-      startSession(s.id).catch((e) => console.error('Restore session error:', e));
-    }
-  } catch (e) {
-    console.error('Failed to restore sessions:', e.message);
-  }
+  // NOTE: Tidak auto-restore session WA saat startup.
+  // Di Railway free tier, restore Baileys saat boot sering kena 'Timed Out'
+  // dan bikin response /api/sessions jadi flaky. User reconnect manual via UI
+  // (klik "Mulai" / "Connect") saat butuh. Status DB tetap dipelihara.
 });
