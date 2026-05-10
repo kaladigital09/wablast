@@ -28,6 +28,7 @@ export async function api<T = any>(path: string, opts: FetchOpts = {}): Promise<
   const res = await fetch(`${API_URL}${path}`, {
     ...opts,
     headers,
+    cache: 'no-store',
     body: isFormData ? opts.body : opts.body ? JSON.stringify(opts.body) : undefined,
   });
 
