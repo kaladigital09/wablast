@@ -47,3 +47,15 @@ drop policy if exists "Service role full access user_profiles" on user_profiles;
 create policy "Service role full access user_profiles"
   on user_profiles for all
   using (auth.role() = 'service_role');
+
+-- Disable RLS untuk semua tabel app.
+-- Backend pakai service_role key & sudah handle authorization via middleware
+-- (requireSuperAdmin, scopeByClient, assertClientAccess). RLS default-deny
+-- malah block backend walau service_role JWT seharusnya bypass — pengalaman
+-- production: PostgREST nested select silent-fail return [].
+-- user_profiles tetap RLS-enabled karena dipakai langsung oleh Supabase Auth.
+alter table clients disable row level security;
+alter table wa_sessions disable row level security;
+alter table wa_auth_state disable row level security;
+alter table campaigns disable row level security;
+alter table messages disable row level security;
