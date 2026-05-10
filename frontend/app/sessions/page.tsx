@@ -20,12 +20,7 @@ function SessionsContent() {
   const { data: sessions, mutate, isLoading } = useSWR(
     clientId ? `/api/sessions?client_id=${clientId}` : '/api/sessions',
     fetcher,
-    {
-      // Polling cuma saat ada session yang status-nya transient (lagi connecting/waiting QR).
-      // Kalau semua final (connected/disconnected/logged_out), idle — refresh manual saja.
-      refreshInterval: (latest) =>
-        latest?.some((s: any) => s.status === 'connecting' || s.status === 'qr') ? 3000 : 0,
-    }
+    { refreshInterval: 15000, dedupingInterval: 5000 }
   );
 
   const [showForm, setShowForm] = useState(false);
