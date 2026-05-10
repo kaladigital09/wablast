@@ -28,7 +28,7 @@ export default function Sidebar() {
       {/* Mobile top bar */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-sm border-b border-stone-200 px-4 h-14 flex items-center justify-between">
         <Link
-          href={user?.role === 'client_user' ? '/campaigns' : '/'}
+          href={user?.role === 'client_user' ? '/sessions' : '/'}
           className="flex items-center gap-2"
         >
           <div className="w-7 h-7 rounded-md bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white text-xs font-bold">

@@ -49,9 +49,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const { user } = await api<{ user: User }>('/api/auth/me');
         setUser(user);
-        // Client user tidak punya dashboard — redirect ke campaigns
+        // Client user tidak punya dashboard — redirect ke akun WA
         if (user.role === 'client_user' && pathname === '/') {
-          router.replace('/campaigns');
+          router.replace('/sessions');
         }
       } catch {
         setToken(null);
@@ -71,8 +71,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     setToken(data.access_token);
     setUser(data.user);
-    // Super admin → dashboard, client user → langsung ke campaigns
-    router.replace(data.user.role === 'client_user' ? '/campaigns' : '/');
+    // Super admin → dashboard, client user → langsung ke akun WA
+    router.replace(data.user.role === 'client_user' ? '/sessions' : '/');
   }
 
   function logout() {
