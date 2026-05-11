@@ -9,6 +9,7 @@ const allItems = [
   { href: '/clients', label: 'Clients', icon: '◉', roles: ['super_admin'] },
   { href: '/sessions', label: 'Akun WA', icon: '◎', roles: ['super_admin', 'client_user'] },
   { href: '/campaigns', label: 'Campaigns', icon: '◇', roles: ['super_admin', 'client_user'] },
+  { href: '/panduan', label: 'Panduan', icon: '◐', roles: ['client_user'] },
 ];
 
 export default function Sidebar() {
