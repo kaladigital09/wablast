@@ -158,15 +158,11 @@ export default function PanduanPage() {
               Upload <strong>file CSV</strong> data tamu yang sudah disiapkan.
             </li>
             <li>
-              Klik <strong>Simpan</strong>, lalu pilih:
-              <ul className="ml-5 mt-1.5 space-y-1 list-disc text-stone-600">
-                <li>
-                  <strong>Jalankan Massal</strong> → kirim semua langsung
-                </li>
-                <li>
-                  <strong>Jadwalkan</strong> → atur tanggal & jam pengiriman
-                </li>
-              </ul>
+              Klik <strong>Simpan</strong> → campaign tersimpan sebagai draft.
+            </li>
+            <li>
+              Buka campaign yang baru dibuat, klik{' '}
+              <strong>Jalankan Massal</strong> untuk mulai blast ke semua tamu.
             </li>
           </ol>
           <Tip>

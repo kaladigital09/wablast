@@ -149,7 +149,9 @@ function CampaignsContent() {
               <th className="text-left p-4 font-semibold text-stone-600 text-xs uppercase tracking-wide">Nama</th>
               <th className="text-left p-4 font-semibold text-stone-600 text-xs uppercase tracking-wide">Status</th>
               <th className="text-left p-4 font-semibold text-stone-600 text-xs uppercase tracking-wide">Penerima</th>
-              <th className="text-left p-4 font-semibold text-stone-600 text-xs uppercase tracking-wide">Jadwal</th>
+              {isAdmin && (
+                <th className="text-left p-4 font-semibold text-stone-600 text-xs uppercase tracking-wide">Jadwal</th>
+              )}
               <th className="text-right p-4 font-semibold text-stone-600 text-xs uppercase tracking-wide">Aksi</th>
             </tr>
           </thead>
@@ -170,16 +172,18 @@ function CampaignsContent() {
                     <span className={`badge ${cfg.color}`}>{cfg.label}</span>
                   </td>
                   <td className="p-4 text-stone-600">{c.total_recipients}</td>
-                  <td className="p-4 text-stone-500 text-xs">
-                    {c.scheduled_at
-                      ? new Date(c.scheduled_at).toLocaleString('id-ID', {
-                          day: 'numeric',
-                          month: 'short',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })
-                      : '—'}
-                  </td>
+                  {isAdmin && (
+                    <td className="p-4 text-stone-500 text-xs">
+                      {c.scheduled_at
+                        ? new Date(c.scheduled_at).toLocaleString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : '—'}
+                    </td>
+                  )}
                   <td className="p-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Link

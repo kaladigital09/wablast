@@ -232,26 +232,19 @@ function NewCampaignContent() {
               />
             </Field>
 
-            <Field label="Jadwal Kirim (opsional)">
-              <DateTimePicker
-                value={form.scheduled_at}
-                onChange={(v) => setForm({ ...form, scheduled_at: v })}
-                placeholder="Pilih tanggal & jam kirim"
-                minNow
-                disabled={
-                  user?.role === 'client_user' && !user.client?.schedule_enabled
-                }
-              />
-              {user?.role === 'client_user' && !user.client?.schedule_enabled ? (
-                <p className="text-xs text-amber-600 mt-1">
-                  ⏸ Fitur scheduler belum diaktifkan untuk akun Anda. Hubungi admin untuk enable.
-                </p>
-              ) : (
+            {user?.role !== 'client_user' && (
+              <Field label="Jadwal Kirim (opsional)">
+                <DateTimePicker
+                  value={form.scheduled_at}
+                  onChange={(v) => setForm({ ...form, scheduled_at: v })}
+                  placeholder="Pilih tanggal & jam kirim"
+                  minNow
+                />
                 <p className="text-xs text-stone-500 mt-1">
                   Kosongkan untuk simpan sebagai draft, lalu kirim manual.
                 </p>
-              )}
-            </Field>
+              </Field>
+            )}
           </div>
 
           <div className="card p-4 sm:p-6 space-y-5">
