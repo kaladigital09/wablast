@@ -33,6 +33,7 @@ function SessionsContent() {
   const [label, setLabel] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string; status: string } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [limitDialogOpen, setLimitDialogOpen] = useState(false);
 
   const isAdmin = user?.role === 'super_admin';
 
@@ -130,7 +131,16 @@ function SessionsContent() {
               : 'Kelola akun WA yang dipakai untuk blast'}
           </p>
         </div>
-        <button onClick={() => setShowForm(true)} className="btn-primary text-sm self-start">
+        <button
+          onClick={() => {
+            if (!isAdmin && (sessions?.length ?? 0) >= 1) {
+              setLimitDialogOpen(true);
+              return;
+            }
+            setShowForm(true);
+          }}
+          className="btn-primary text-sm self-start"
+        >
           + Tambah Akun WA
         </button>
       </div>
@@ -261,7 +271,7 @@ function SessionsContent() {
                   session={s}
                   onStart={startSession}
                   onStop={stopSession}
-                  onDelete={isAdmin ? (s: any) => setDeleteTarget({ id: s.id, label: s.label, status: s.status }) : undefined}
+                  onDelete={(s: any) => setDeleteTarget({ id: s.id, label: s.label, status: s.status })}
                 />
               ))}
             </div>
@@ -296,15 +306,12 @@ function SessionsContent() {
                         session={s}
                         onStart={startSession}
                         onStop={stopSession}
-                        onDelete={
-                          isAdmin
-                            ? (s: any) =>
-                                setDeleteTarget({
-                                  id: s.id,
-                                  label: s.label,
-                                  status: s.status,
-                                })
-                            : undefined
+                        onDelete={(s: any) =>
+                          setDeleteTarget({
+                            id: s.id,
+                            label: s.label,
+                            status: s.status,
+                          })
                         }
                       />
                     ))}
@@ -334,6 +341,23 @@ function SessionsContent() {
         loading={actionLoading}
         onConfirm={performDeleteSession}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      <ConfirmDialog
+        open={limitDialogOpen}
+        title="Hanya Boleh 1 Akun WhatsApp"
+        variant="info"
+        icon="ⓘ"
+        description={
+          <>
+            Anda sudah memiliki akun WhatsApp aktif. Untuk menambah akun baru,
+            <strong> hapus dulu akun lama</strong> melalui ikon tempat sampah di card.
+          </>
+        }
+        cancelLabel="Tutup"
+        confirmLabel="Mengerti"
+        onConfirm={() => setLimitDialogOpen(false)}
+        onCancel={() => setLimitDialogOpen(false)}
       />
     </div>
   );

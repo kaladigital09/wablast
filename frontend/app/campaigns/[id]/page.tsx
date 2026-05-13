@@ -36,6 +36,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const [blastModalOpen, setBlastModalOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'delete' | 'cancel' | 'run' | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'detail' | 'messages'>('detail');
 
   const { data: campaign, mutate: mutateCampaign } = useSWR(`/api/campaigns/${id}`, fetcher, {
     // Polling cuma saat campaign sedang berjalan (running/queued).
@@ -48,6 +49,9 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     fetcher,
     { refreshInterval: isLive ? 3000 : 0 }
   );
+  // Untuk lookup label akun WA di section Detail Campaign
+  const { data: sessions } = useSWR('/api/sessions', fetcher);
+  const usedSession = sessions?.find((s: any) => s.id === campaign?.session_id);
 
   async function sendOne(messageId: number) {
     setSendingId(messageId);
@@ -124,6 +128,23 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const allMessages = messagesData?.messages || [];
   const filteredMessages =
     filter === 'all' ? allMessages : allMessages.filter((m: any) => m.status === filter);
+
+  // Extract base invitation link dari message sample (link disimpan per-row di messages.variables.link,
+  // bukan di tabel campaigns). Ambil dari message pertama yang punya variables.link.
+  const sampleLinkMsg = allMessages.find((m: any) => m.variables?.link);
+  const sampleLink: string | null = sampleLinkMsg?.variables?.link ?? null;
+  // Buang encoding nama tamu di akhir untuk dapat base URL
+  let baseInvitationLink: string | null = null;
+  if (sampleLink && sampleLinkMsg?.name) {
+    const encoded = encodeURIComponent(sampleLinkMsg.name);
+    if (sampleLink.endsWith(encoded)) {
+      baseInvitationLink = sampleLink.slice(0, -encoded.length);
+    } else {
+      baseInvitationLink = sampleLink;
+    }
+  } else if (sampleLink) {
+    baseInvitationLink = sampleLink;
+  }
 
   return (
     <div className="space-y-6">
@@ -252,6 +273,148 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         </div>
       </div>
 
+      {/* Tab navigation */}
+      <div className="border-b border-stone-200 flex gap-1">
+        <TabButton
+          active={activeTab === 'detail'}
+          onClick={() => setActiveTab('detail')}
+          label="Detail Campaign"
+        />
+        <TabButton
+          active={activeTab === 'messages'}
+          onClick={() => setActiveTab('messages')}
+          label="Daftar Pesan"
+          count={stats.total}
+        />
+      </div>
+
+      {activeTab === 'detail' && (
+      <>
+      {/* Detail Campaign — read-only view dari form yang dulu diinput */}
+      <div className="card overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-stone-100">
+          <h2 className="font-semibold text-stone-900">Detail Campaign</h2>
+          <p className="text-sm text-stone-500">
+            Konfigurasi yang dipakai saat campaign dibuat
+          </p>
+        </div>
+        <div className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+          <DetailField label="Nama Campaign" value={campaign.name} />
+          <DetailField
+            label="Akun WhatsApp"
+            value={
+              usedSession
+                ? `${usedSession.label}${
+                    usedSession.phone_number ? ` (+${usedSession.phone_number})` : ''
+                  }`
+                : campaign.session_id
+                ? '— Akun sudah dihapus —'
+                : '— Belum dipilih —'
+            }
+          />
+          {campaign.scheduled_at && (
+            <DetailField
+              label="Jadwal Kirim"
+              value={new Date(campaign.scheduled_at).toLocaleString('id-ID', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            />
+          )}
+          <DetailField
+            label="Total Penerima"
+            value={`${campaign.total_recipients ?? stats.total} nomor`}
+          />
+
+          {baseInvitationLink && (
+            <div className="md:col-span-2">
+              <div className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">
+                Link Undangan
+              </div>
+              <div className="space-y-2">
+                <div className="bg-stone-50 border border-stone-200 rounded-lg p-3 text-sm break-all">
+                  <span className="text-stone-500 text-xs block mb-1">
+                    Base URL (auto-append nama tamu):
+                  </span>
+                  <code className="text-violet-700">{baseInvitationLink}</code>
+                </div>
+                {sampleLinkMsg && (
+                  <div className="bg-violet-50 border border-violet-100 rounded-lg p-3 text-xs break-all">
+                    <span className="text-violet-700 font-medium">
+                      Contoh untuk "{sampleLinkMsg.name}":
+                    </span>{' '}
+                    <a
+                      href={sampleLink || undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-violet-900 hover:underline"
+                    >
+                      {sampleLink}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {campaign.image_url && (
+            <div className="md:col-span-2">
+              <div className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">
+                Gambar Undangan
+              </div>
+              <a
+                href={campaign.image_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block group"
+              >
+                <img
+                  src={campaign.image_url}
+                  alt="Gambar undangan"
+                  className="max-w-full sm:max-w-xs rounded-lg border border-stone-200 group-hover:opacity-90 transition-opacity"
+                />
+                <div className="text-xs text-violet-600 group-hover:text-violet-700 mt-1.5">
+                  ↗ Buka di tab baru
+                </div>
+              </a>
+            </div>
+          )}
+
+          <div className="md:col-span-2">
+            <div className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">
+              Template Pesan
+            </div>
+            <pre className="bg-stone-50 border border-stone-200 rounded-lg p-4 text-sm text-stone-800 font-sans whitespace-pre-wrap break-words leading-relaxed">
+              {campaign.template_text || '— Tidak ada template —'}
+            </pre>
+            <p className="text-xs text-stone-400 mt-2">
+              Variabel <code className="text-stone-500">{'{nama}'}</code>,{' '}
+              <code className="text-stone-500">{'{nama_client}'}</code>, dll
+              akan otomatis di-replace per penerima.
+            </p>
+          </div>
+
+          {campaign.notes && (
+            <div className="md:col-span-2">
+              <div className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">
+                Catatan Sistem
+              </div>
+              <div className="text-sm text-stone-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                {campaign.notes}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      </>
+      )}
+
+      {activeTab === 'messages' && (
+      <>
       {/* Tip */}
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
         <div className="text-2xl shrink-0">💡</div>
@@ -410,6 +573,8 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
           </table>
         </div>
       </div>
+      </>
+      )}
 
       <ConfirmDialog
         open={confirmAction === 'run'}
@@ -506,5 +671,55 @@ function StatBox({
       <div className="text-xs text-stone-500 uppercase tracking-wide font-medium">{label}</div>
       <div className={`text-3xl font-bold mt-1 ${color}`}>{value}</div>
     </Wrapper>
+  );
+}
+
+function DetailField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-1">
+        {label}
+      </div>
+      <div className="text-sm text-stone-800 font-medium">{value}</div>
+    </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  label,
+  count,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  count?: number;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${
+        active
+          ? 'text-violet-700'
+          : 'text-stone-500 hover:text-stone-700'
+      }`}
+    >
+      <span className="flex items-center gap-2">
+        {label}
+        {typeof count === 'number' && (
+          <span
+            className={`text-xs px-1.5 py-0.5 rounded-full ${
+              active ? 'bg-violet-100 text-violet-700' : 'bg-stone-100 text-stone-600'
+            }`}
+          >
+            {count}
+          </span>
+        )}
+      </span>
+      {active && (
+        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-600" />
+      )}
+    </button>
   );
 }
